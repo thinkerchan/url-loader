@@ -84,7 +84,7 @@ export default function loader(content) {
   });
 
   // No limit or within the specified limit
-  if (shouldTransform(options.limit, content.length)) {
+  if (this.resource.indexOf('?inline' > -1)) {
     const { resourcePath } = this;
     const mimetype = getMimetype(options.mimetype, resourcePath);
     const encoding = getEncoding(options.encoding);
@@ -102,13 +102,34 @@ export default function loader(content) {
       resourcePath
     );
 
-    const esModule =
-      typeof options.esModule !== 'undefined' ? options.esModule : true;
+    return `${'module.exports ='} ${JSON.stringify(encodedData)}`;
+  } 
+    if (shouldTransform(options.limit, content.length)) {
+      const { resourcePath } = this;
+      const mimetype = getMimetype(options.mimetype, resourcePath);
+      const encoding = getEncoding(options.encoding);
 
-    return `${
-      esModule ? 'export default' : 'module.exports ='
-    } ${JSON.stringify(encodedData)}`;
-  }
+      if (typeof content === 'string') {
+        // eslint-disable-next-line no-param-reassign
+        content = Buffer.from(content);
+      }
+
+      const encodedData = getEncodedData(
+        options.generator,
+        mimetype,
+        encoding,
+        content,
+        resourcePath
+      );
+
+      const esModule =
+        typeof options.esModule !== 'undefined' ? options.esModule : true;
+
+      return `${
+        esModule ? 'export default' : 'module.exports ='
+      } ${JSON.stringify(encodedData)}`;
+    }
+  
 
   // Normalize the fallback.
   const {
